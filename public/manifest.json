@@ -1,0 +1,29 @@
+{
+    "manifest_version": 3,
+    "name": "Odoo Web Extension",
+    "version": "1.0",
+    "description": "Extensión para desarrollar en Odoo",
+    "permissions": [
+      "scripting",
+      "activeTab"
+    ],
+    "content_scripts": [
+      {
+        "matches": ["http://localhost:8069/*"],
+        "js": ["assets/content.js"],
+        "css": ["assets/main.css"]
+      }
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "assets/*"
+        ],
+        "matches": ["<all_urls>"]
+      }
+    ],
+    "icons": {
+      "48": "favicon.ico"
+    }
+}
+  
