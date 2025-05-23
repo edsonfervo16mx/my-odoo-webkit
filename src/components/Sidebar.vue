@@ -10,11 +10,18 @@
       <div class="wk-sidebar-content">
         <nav class="wk-sidebar-menu">
           <ul>
-            <li><a href="#" @click="navigate('dashboard')">Dashboard</a></li>
-            <li><a href="#" @click="navigate('settings')">Settings</a></li>
+            <li><RouterLink to="/">Home</RouterLink></li>
+            <li><RouterLink to="/documentation">Documentation</RouterLink></li>
+            <li><RouterLink to="/model-manager">Model Manager</RouterLink></li>
+            <li><RouterLink to="/view-manager">View Manager</RouterLink></li>
+            <li><RouterLink to="/scripts">Scripts</RouterLink></li>
+            <li><RouterLink to="/settings">Settings</RouterLink></li>
             <li><RouterLink to="/help">Help</RouterLink></li>
           </ul>
         </nav>
+        <div class="wk-sidebar-router-content">
+          <RouterView />
+        </div>
       </div>
     </div>
     <!-- Botón flotante visible cuando el sidebar está cerrado -->
@@ -57,8 +64,8 @@ const navigate = (section: string) => {
 .wk-odoo-sidebar {
   position: absolute;
   top: 0;
-  right: -300px;
-  width: 300px;
+  right: -30vw;
+  width: 30vw;
   height: 100vh;
   background-color: #ffffff;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
@@ -138,5 +145,12 @@ const navigate = (section: string) => {
 
 .wk-sidebar-menu a:hover {
   background-color: #f5f5f5;
+}
+
+.wk-sidebar-router-content {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
 }
 </style>
