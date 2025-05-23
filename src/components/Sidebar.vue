@@ -12,7 +12,7 @@
           <ul>
             <li><a href="#" @click="navigate('dashboard')">Dashboard</a></li>
             <li><a href="#" @click="navigate('settings')">Settings</a></li>
-            <li><a href="#" @click="navigate('help')">Help</a></li>
+            <li><RouterLink to="/help">Help</RouterLink></li>
           </ul>
         </nav>
       </div>
