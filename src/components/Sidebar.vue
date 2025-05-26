@@ -11,9 +11,7 @@
         <nav class="wk-sidebar-menu">
           <ul>
             <li><RouterLink to="/">Home</RouterLink></li>
-            <li><RouterLink to="/documentation">Documentation</RouterLink></li>
-            <li><RouterLink to="/model-manager">Model Manager</RouterLink></li>
-            <li><RouterLink to="/view-manager">View Manager</RouterLink></li>
+            <li><RouterLink to="/model-manager">Model</RouterLink></li>
             <li><RouterLink to="/scripts">Scripts</RouterLink></li>
             <li><RouterLink to="/settings">Settings</RouterLink></li>
             <li><RouterLink to="/help">Help</RouterLink></li>
