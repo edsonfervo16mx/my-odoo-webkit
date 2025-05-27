@@ -130,6 +130,10 @@ parseOdooUrl()
                 <MiscTab
                   v-if="activeTab === 'misc'"
                   :menu-id="menuId"
+                  :model="model"
+                  :id="id"
+                  :action="action"
+                  :view-type="viewType"
                 />
                 </div>
               </div>
