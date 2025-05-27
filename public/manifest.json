@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Odoo Web Extension",
+    "name": "my-odoo-webkit",
     "version": "1.0",
-    "description": "Extensión para desarrollar en Odoo",
+    "description": "Extension for Odoo development",
     "permissions": [
       "scripting",
       "activeTab"
