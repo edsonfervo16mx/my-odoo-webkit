@@ -1,33 +1,71 @@
-# my-odoo-webkit
+# 🧩 my-odoo-webkit
 
-This template should help get you started developing with Vue 3 in Vite.
+A Chrome extension built with Vue 3 and Vite that adds a developer sidebar to local Odoo instances (`http://localhost:8069`).  
+Designed to boost productivity for Odoo developers by providing quick access to tools, links, and custom features.
 
-## Recommended IDE Setup
+---
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## ⚙️ Project Setup
 
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+Install dependencies:
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### 🔥 Compile and Hot-Reload for Development
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+### 🏗️ Type-Check, Compile and Minify for Production
 
 ```sh
 npm run build
 ```
+
+---
+
+## 🚀 Load the Extension in Chrome
+
+Once the extension is built, you can load it into Chrome for testing:
+
+1. Run the build:
+
+   ```sh
+   npm run build
+   ```
+
+2. Open Chrome and go to:
+
+   ```
+   chrome://extensions/
+   ```
+
+3. Enable **Developer mode** (toggle at the top right).
+
+4. Click **“Load unpacked”**.
+
+5. Select the root directory of this project (where `manifest.json` is located).
+
+6. Open `http://localhost:8069` in a new tab (your local Odoo instance).
+
+7. You should see the Vue sidebar injected into the Odoo interface.
+
+> ✅ Make sure your Odoo server is running and that you are logged in to avoid session issues.
+
+---
+
+## 🧠 Stack
+
+- Vue 3 + Vite
+- Chrome Extension (Manifest V3)
+- Content Script Injection
+- Designed for Odoo Developers
+
+---
+
+## 📄 License
+
+MIT
