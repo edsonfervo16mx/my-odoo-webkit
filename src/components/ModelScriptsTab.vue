@@ -1,13 +1,10 @@
 <template>
-  <div class="wk-tab-pane">
-    <div class="wk-model-manager-content">
-      <div class="wk-code-container" v-for="(code, index) in codeContent" :key="code">
-        <div class="wk-code-row">
-          <pre class="wk-code-content"><code>{{ code }}</code></pre>
-        </div>
-        <div class="wk-button-row">
-          <button class="wk-copy-btn" @click="copyToClipboard(index)">Copy</button>
-        </div>
+  <div class="wk-shell-container">
+    <h1>Model Scripts</h1>
+    <div class="wk-shell-commands">
+      <div class="wk-command" v-for="(item, index) in codeContent" :key="item.code">
+        <pre @click="copyToClipboard(index)"><code>{{ item.code }}</code></pre>
+        <span>{{ item.description }}</span>
       </div>
     </div>
   </div>
@@ -22,11 +19,26 @@ const props = defineProps<{
 }>()
 
 const codeContent = computed(() => {
-  const browse_script = `self.env['${props.model}'].browse(${props.id})`
-  const search_script = `self.env['${props.model}'].search([('id', '=', ${props.id})])`
-  const search_read_script = `self.env['${props.model}'].search_read([('id', '=', ${props.id})])`
-  const search_count_script = `self.env['${props.model}'].search_count([('id', '=', ${props.id})])`
-  const unlink_script = `self.env['${props.model}'].unlink(${props.id})`
+  const browse_script = {
+    code: `self.env['${props.model}'].browse(${props.id})`,
+    description: 'Returns a recordset for the given ID'
+  }
+  const search_script = {
+    code: `self.env['${props.model}'].search([('id', '=', ${props.id})])`,
+    description: 'Search records'
+  }
+  const search_read_script = {
+    code: `self.env['${props.model}'].search_read([('id', '=', ${props.id})])`,
+    description: 'Search and read'
+  }
+  const search_count_script = {
+    code: `self.env['${props.model}'].search_count([('id', '=', ${props.id})])`,
+    description: 'Count records'
+  }
+  const unlink_script = {
+    code: `self.env['${props.model}'].unlink(${props.id})`,
+    description: 'Delete the record with the given ID'
+  }
 
   return [
     browse_script,
@@ -39,7 +51,7 @@ const codeContent = computed(() => {
 
 const copyToClipboard = async (index: number) => {
   try {
-    await navigator.clipboard.writeText(codeContent.value[index])
+    await navigator.clipboard.writeText(codeContent.value[index].code)
   } catch (err) {
     console.error('Failed to copy text: ', err)
   }
@@ -47,68 +59,55 @@ const copyToClipboard = async (index: number) => {
 </script>
 
 <style scoped>
-.wk-code-container {
-  background-color: #fff;
-  border-radius: 8px;
+.wk-shell-container {
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-  position: relative;
+  background: #f5f5f5;
+  border-radius: 8px;
 }
 
-.wk-code-row {
+.wk-shell-container h1 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.wk-shell-commands {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  gap: 15px;
 }
 
-.wk-code-content {
-  background-color: #263238;
-  border-radius: 6px;
-  padding: 15px;
-  margin: 0;
-  overflow-x: auto;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #EEFFFF;
-  width: 100%;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.wk-button-row {
+.wk-command {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 10px;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.wk-code-content :deep(.string) { color: #C3E88D; }
-.wk-code-content :deep(.keyword) { color: #C792EA; }
-.wk-code-content :deep(.function) { color: #82AAFF; }
-.wk-code-content :deep(.number) { color: #F78C6C; }
-.wk-code-content :deep(.operator) { color: #89DDFF; }
-.wk-code-content :deep(.comment) { color: #546E7A; }
-.wk-code-content :deep(.variable) { color: #EEFFFF; }
-.wk-code-content :deep(.property) { color: #B2CCD6; }
-.wk-code-content :deep(.self) { color: #FF0000; }
-
-.wk-copy-btn {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 8px 16px;
+.wk-command pre {
+  margin: 0;
+  padding: 8px 12px;
+  background: #2c3e50;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: 'Courier New', monospace;
   font-size: 14px;
-  transition: background-color 0.3s ease;
+  color: #fff;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
-.wk-copy-btn:hover {
-  background-color: #45a049;
+.wk-command pre:hover {
+  background: #3c4e60;
 }
 
-.wk-copy-btn:active {
-  background-color: #3d8b40;
+.wk-command span {
+  color: #666;
+  font-size: 14px;
+  flex: 1;
 }
 </style> 

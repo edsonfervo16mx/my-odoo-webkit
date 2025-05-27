@@ -11,7 +11,7 @@ const toggleSidebar = () => {
 import ModelDescriptionTab from './components/ModelDescriptionTab.vue'
 import ModelScriptsTab from './components/ModelScriptsTab.vue'
 import MiscTab from './components/MiscTab.vue'
-
+import ShellTab from './components/Shell.vue'
 // Initialize refs for URL parameters
 const id = ref<string | null>(null)
 const menuId = ref<string | null>(null) 
@@ -20,11 +20,12 @@ const model = ref<string | null>(null)
 const viewType = ref<string | null>(null)
 
 // Tab management
-const activeTab = ref('scripts')
+const activeTab = ref('description')
 const tabs = [
   { id: 'description', name: 'Model Description' },
   { id: 'scripts', name: 'Model Scripts' },
-  { id: 'misc', name: 'Miscellaneous' }
+  { id: 'fields', name: 'Fields' },
+  { id: 'shell', name: 'Shell' }
 ]
 
 // Function to parse URL parameters
@@ -128,8 +129,15 @@ parseOdooUrl()
                 />
                 
                 <MiscTab
-                  v-if="activeTab === 'misc'"
+                  v-if="activeTab === 'fields'"
                   :menu-id="menuId"
+                  :model="model"
+                  :id="id"
+                  :action="action"
+                  :view-type="viewType"
+                />
+                <ShellTab
+                  v-if="activeTab === 'shell'"
                   :model="model"
                   :id="id"
                   :action="action"

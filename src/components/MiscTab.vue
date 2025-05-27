@@ -2,8 +2,16 @@
   <div class="wk-tab-pane">
     <div class="wk-misc-content">
       <h3>Fields Information</h3>
+      <div class="wk-search-container">
+        <input 
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search fields..."
+          class="wk-search-input"
+        />
+      </div>
       <div class="wk-cards-container">
-        <div v-for="(field, key) in data?.result" :key="key" class="wk-card">
+        <div v-for="(field, key) in filteredFields" :key="key" class="wk-card">
           <div class="wk-card-header">
             <h4>{{ key }}</h4>
           </div>
@@ -36,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 const props = defineProps<{
   model: string | null
   id: string | null
@@ -46,6 +54,23 @@ const props = defineProps<{
 }>()
 
 const data: any = ref({})
+const searchQuery = ref('')
+
+const filteredFields = computed(() => {
+  if (!data.value?.result) return {}
+  if (!searchQuery.value) return data.value.result
+
+  const query = searchQuery.value.toLowerCase()
+  const result: Record<string, any> = {}
+  
+  Object.entries(data.value.result).forEach(([key, value]) => {
+    if (key.toLowerCase().includes(query)) {
+      result[key] = value
+    }
+  })
+
+  return result
+})
 
 const getSessionId = (): string => {
   const cookies = document.cookie.split(';')
@@ -87,6 +112,24 @@ onMounted(async () => {
 <style scoped>
 .wk-misc-content {
   padding: 20px;
+}
+
+.wk-search-container {
+  margin-bottom: 20px;
+}
+
+.wk-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.wk-search-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
 }
 
 .wk-cards-container {
