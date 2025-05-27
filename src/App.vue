@@ -57,6 +57,23 @@ const reloadApp = () => {
   parseOdooUrl()
 }
 
+const toggleDebugMode = () => {
+  const currentUrl = window.location.href
+  const url = new URL(currentUrl)
+  
+  if (url.searchParams.has('debug')) {
+    // If debug mode is on, remove it
+    url.searchParams.delete('debug')
+  } else {
+    // If debug mode is off, add it
+    url.searchParams.append('debug', '1')
+  }
+  
+  // Preserve the hash part
+  const hash = window.location.hash
+  window.location.href = url.toString() + hash
+}
+
 parseOdooUrl()
 
 </script>
@@ -67,6 +84,9 @@ parseOdooUrl()
       <div class="wk-sidebar-header">
         <h2 class="wk-sidebar-title">Odoo Tools</h2>
         <div class="wk-header-buttons">
+          <button class="wk-debug-btn" @click="toggleDebugMode" title="Toggle Debug Mode">
+            🐞
+          </button>
           <button class="wk-reload-btn" @click="reloadApp" title="Reload Extension">
             ↻
           </button>
@@ -194,7 +214,7 @@ parseOdooUrl()
   align-items: center;
 }
 
-.wk-reload-btn {
+.wk-reload-btn, .wk-debug-btn {
   background: none;
   border: none;
   color: white;
@@ -206,6 +226,10 @@ parseOdooUrl()
 
 .wk-reload-btn:hover {
   transform: rotate(180deg);
+}
+
+.wk-debug-btn:hover {
+  transform: scale(1.2);
 }
 
 .wk-sidebar-header h2 {
