@@ -44,6 +44,19 @@ const parseOdooUrl = () => {
   viewType.value = params.get('view_type')
 }
 
+const reloadApp = () => {
+  // Reset all reactive values
+  id.value = null
+  menuId.value = null
+  action.value = null
+  model.value = null
+  viewType.value = null
+  activeTab.value = 'scripts'
+  
+  // Re-parse URL and trigger onMounted hooks
+  parseOdooUrl()
+}
+
 parseOdooUrl()
 
 </script>
@@ -53,9 +66,14 @@ parseOdooUrl()
     <div class="wk-odoo-sidebar" :class="{ 'wk-sidebar-open': isOpen }">
       <div class="wk-sidebar-header">
         <h2 class="wk-sidebar-title">Odoo Tools</h2>
-        <button class="wk-toggle-btn" @click="toggleSidebar">
-          {{ isOpen ? '×' : '☰' }}
-        </button>
+        <div class="wk-header-buttons">
+          <button class="wk-reload-btn" @click="reloadApp" title="Reload Extension">
+            ↻
+          </button>
+          <button class="wk-toggle-btn" @click="toggleSidebar">
+            {{ isOpen ? '×' : '☰' }}
+          </button>
+        </div>
       </div>
       <div class="wk-sidebar-content">
         <div class="wk-sidebar-router-content">
@@ -169,6 +187,26 @@ parseOdooUrl()
   padding: 1rem;
   background-color: #875A7B;
   color: white;
+}
+
+.wk-header-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.wk-reload-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.wk-reload-btn:hover {
+  transform: rotate(180deg);
 }
 
 .wk-sidebar-header h2 {

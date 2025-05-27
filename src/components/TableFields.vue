@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Table Fields</h1>
+    <h1 class="wk-title">Table Fields</h1>
     <div class="search-container">
       <input 
         type="text" 
@@ -8,6 +8,13 @@
         placeholder="Search by field or value..."
         class="search-input"
       />
+      <button 
+        class="copy-button"
+        @click="copyDataToClipboard"
+        title="Copy all data as JSON"
+      >
+        Copy All Data
+      </button>
     </div>
     <div class="table-responsive">
       <table>
@@ -71,6 +78,18 @@ const formatValue = (value: any): string => {
   return String(value)
 }
 
+const copyDataToClipboard = () => {
+  const jsonData = JSON.stringify(data.value, null, 2)
+  navigator.clipboard.writeText(jsonData)
+    .then(() => {
+    //   alert('Data copied to clipboard!')
+    })
+    .catch(err => {
+      console.error('Failed to copy data:', err)
+    //   alert('Failed to copy data to clipboard')
+    })
+}
+
 const getSessionId = (): string => {
   const cookies = document.cookie.split(';')
   const sessionCookie = cookies.find(cookie => cookie.trim().startsWith('session_id='))
@@ -117,6 +136,8 @@ onMounted(async () => {
 
 .search-container {
   margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
 }
 
 .search-input {
@@ -131,6 +152,21 @@ onMounted(async () => {
   outline: none;
   border-color: #4a90e2;
   box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+}
+
+.copy-button {
+  padding: 8px 16px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.copy-button:hover {
+  background-color: #357abd;
 }
 
 table {
@@ -165,9 +201,13 @@ tr:hover {
   background-color: #f8f8f8;
 }
 
-h1 {
-  color: #333;
-  margin-bottom: 20px;
+.wk-title {
+  color: #2c3e50;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 1rem 0 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #4a90e2;
 }
 
 @media screen and (max-width: 600px) {
@@ -177,6 +217,11 @@ h1 {
   
   th, td {
     padding: 8px 10px;
+  }
+
+  .wk-title {
+    font-size: 1.5rem;
+    margin: 0.8rem 0 1.2rem;
   }
 }
 </style>
