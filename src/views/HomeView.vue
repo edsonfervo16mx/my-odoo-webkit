@@ -1,11 +1,12 @@
-<script setup lang="ts">
-</script>
-
 <template>
-  <main>
-    <h1>Hello World</h1>
-  </main>
+  <div class="wk-model-manager-container">
+  </div>
 </template>
 
+<script setup lang="ts">
+
+</script>
+
 <style scoped>
+
 </style>

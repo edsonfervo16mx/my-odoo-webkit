@@ -11,8 +11,5 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
-// Mount the app to the container
-const mountEl = document.getElementById('app')
-if (mountEl) {
-  app.mount('#app')
-}
+// Mount the app
+app.mount('#app')
