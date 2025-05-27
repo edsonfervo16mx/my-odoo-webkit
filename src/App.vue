@@ -138,10 +138,6 @@ parseOdooUrl()
                 />
                 <ShellTab
                   v-if="activeTab === 'shell'"
-                  :model="model"
-                  :id="id"
-                  :action="action"
-                  :view-type="viewType"
                 />
                 </div>
               </div>

@@ -43,12 +43,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 
 const isExpanded = ref(true);
 
-const copyToClipboard = async (text) => {
+const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text);
     // alert('Command copied to clipboard!');
