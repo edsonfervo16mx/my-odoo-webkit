@@ -276,7 +276,6 @@ parseOdooUrl()
 }
 
 .wk-sidebar-router-content {
-  margin-top: 2rem;
   padding: 1rem;
   background-color: #f9f9f9;
   border-radius: 8px;
