@@ -8,9 +8,11 @@
       <p><strong>View Type:</strong> {{ viewType }}</p>
     </div>
   </div>
+  <TableFields :model="model" :id="id" v-if="model && id"/>
 </template>
 
 <script setup lang="ts">
+import TableFields from './TableFields.vue'
 defineProps<{
   model: string | null
   id: string | null

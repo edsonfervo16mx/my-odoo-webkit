@@ -61,7 +61,6 @@ parseOdooUrl()
         <div class="wk-sidebar-router-content">
           <p>Odoo Tools for developers</p>
           <div class="wk-sidebar-router-content-inner">
-            <small>Open the console to see the logs</small>
             <div class="wk-router-view-container">
               <div class="wk-model-manager-container">
                 <h1 class="wk-model-manager-title">Odoo Tools</h1>

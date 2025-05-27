@@ -4,6 +4,8 @@
       <div class="wk-code-container" v-for="(code, index) in codeContent" :key="code">
         <div class="wk-code-row">
           <pre class="wk-code-content"><code>{{ code }}</code></pre>
+        </div>
+        <div class="wk-button-row">
           <button class="wk-copy-btn" @click="copyToClipboard(index)">Copy</button>
         </div>
       </div>
@@ -56,8 +58,8 @@ const copyToClipboard = async (index: number) => {
 
 .wk-code-row {
   display: flex;
-  align-items: center;
-  gap: 15px;
+  flex-direction: column;
+  width: 100%;
 }
 
 .wk-code-content {
@@ -70,7 +72,15 @@ const copyToClipboard = async (index: number) => {
   font-size: 14px;
   line-height: 1.5;
   color: #EEFFFF;
-  flex: 1;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.wk-button-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 
 .wk-code-content :deep(.string) { color: #C3E88D; }
@@ -92,7 +102,6 @@ const copyToClipboard = async (index: number) => {
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.3s ease;
-  height: fit-content;
 }
 
 .wk-copy-btn:hover {
