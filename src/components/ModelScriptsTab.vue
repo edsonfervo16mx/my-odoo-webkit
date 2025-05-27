@@ -35,6 +35,22 @@ const codeContent = computed(() => {
     code: `self.env['${props.model}'].search_count([('id', '=', ${props.id})])`,
     description: 'Count records'
   }
+
+  const create_script = {
+    code: `self.env['${props.model}'].create({'name': 'New Name'})`,
+    description: 'Create a new record'
+  }
+
+  const update_script = {
+    code: `self.env['${props.model}'].browse(${props.id}).write({'name': 'New Name'})`,
+    description: 'Update the record'
+  }
+
+  const commit_script = {
+    code: `self.env.cr.commit()`,
+    description: 'Commit the transaction'
+  }
+
   const unlink_script = {
     code: `self.env['${props.model}'].unlink(${props.id})`,
     description: 'Delete the record with the given ID'
@@ -45,6 +61,9 @@ const codeContent = computed(() => {
     search_script,
     search_read_script,
     search_count_script,
+    create_script,
+    update_script,
+    commit_script,
     unlink_script
   ]
 })

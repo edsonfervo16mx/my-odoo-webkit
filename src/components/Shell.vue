@@ -1,7 +1,12 @@
 <template>
   <div class="wk-shell-container">
-    <h1>Shell Commands</h1>
-    <div class="wk-shell-commands">
+    <div class="header-container">
+      <h1>Shell Commands</h1>
+      <button class="toggle-button" @click="isExpanded = !isExpanded">
+        {{ isExpanded ? 'Collapse' : 'Expand' }}
+      </button>
+    </div>
+    <div class="wk-shell-commands" :class="{ 'collapsed': !isExpanded }">
       <div class="wk-command">
         <pre @click="copyToClipboard('odoo-bin shell')"><code>$ odoo-bin shell</code></pre>
         <span>Open an Odoo shell</span>
@@ -39,6 +44,10 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+
+const isExpanded = ref(true);
+
 const copyToClipboard = async (text) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -57,16 +66,44 @@ const copyToClipboard = async (text) => {
   border-radius: 8px;
 }
 
-.wk-shell-container h1 {
-  color: #2c3e50;
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
+}
+
+.header-container h1 {
+  color: #2c3e50;
   font-size: 24px;
+  margin: 0;
+}
+
+.toggle-button {
+  padding: 8px 16px;
+  background: #2c3e50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggle-button:hover {
+  background: #3c4e60;
 }
 
 .wk-shell-commands {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  transition: max-height 0.3s ease-in-out;
+  overflow: hidden;
+  max-height: 2000px;
+}
+
+.wk-shell-commands.collapsed {
+  max-height: 0;
 }
 
 .wk-command {
