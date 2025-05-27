@@ -77,11 +77,10 @@ parseOdooUrl()
       </div>
       <div class="wk-sidebar-content">
         <div class="wk-sidebar-router-content">
-          <p>Odoo Tools for developers</p>
           <div class="wk-sidebar-router-content-inner">
             <div class="wk-router-view-container">
               <div class="wk-model-manager-container">
-                <h1 class="wk-model-manager-title">Odoo Tools</h1>
+                <h1 class="wk-model-manager-title">Odoo Tools for developers</h1>
                 <div class="wk-tabs">
                   <button 
                     v-for="tab in tabs" 
