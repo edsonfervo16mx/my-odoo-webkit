@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-const isOpen = ref(true)
+const isOpen = ref(false)
 
 const toggleSidebar = () => {
   isOpen.value = !isOpen.value
@@ -18,6 +18,11 @@ const menuId = ref<string | null>(null)
 const action = ref<string | null>(null)
 const model = ref<string | null>(null)
 const viewType = ref<string | null>(null)
+
+const context = ref<string | null>(null)
+const domain = ref<string | null>(null)
+const xmlId = ref<string | null>(null)
+const searchViewId = ref<string | null>(null)
 
 // Tab management
 const activeTab = ref('description')
@@ -45,6 +50,17 @@ const parseOdooUrl = () => {
   viewType.value = params.get('view_type')
 }
 
+const setCurrentAction = () => {
+  const currentAction = sessionStorage.getItem('current_action')
+  if (currentAction) {
+    const actionObj = JSON.parse(currentAction)
+    context.value = actionObj.context
+    domain.value = actionObj.domain
+    xmlId.value = actionObj.xml_id
+    searchViewId.value = actionObj.search_view_id
+  }
+}
+
 const reloadApp = () => {
   // Reset all reactive values
   id.value = null
@@ -52,10 +68,15 @@ const reloadApp = () => {
   action.value = null
   model.value = null
   viewType.value = null
-  activeTab.value = 'scripts'
+  context.value = null
+  domain.value = null
+  xmlId.value = null
+  searchViewId.value = null
+  activeTab.value = 'description'
   
   // Re-parse URL and trigger onMounted hooks
   parseOdooUrl()
+  setCurrentAction()
 }
 
 const toggleDebugMode = () => {
@@ -76,6 +97,7 @@ const toggleDebugMode = () => {
 }
 
 parseOdooUrl()
+setCurrentAction()
 
 </script>
 
@@ -120,6 +142,10 @@ parseOdooUrl()
                   :id="id"
                   :action="action"
                   :view-type="viewType"
+                  :context="context"
+                  :domain="domain"
+                  :xml-id="xmlId"
+                  :search-view-id="searchViewId"
                 />
                 
                 <ModelScriptsTab
@@ -176,8 +202,8 @@ parseOdooUrl()
 .wk-odoo-sidebar {
   position: absolute;
   top: 0;
-  right: -30vw;
-  width: 30vw;
+  right: -35vw;
+  width: 35vw;
   height: 100vh;
   background-color: #ffffff;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);

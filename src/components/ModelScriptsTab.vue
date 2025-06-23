@@ -1,10 +1,14 @@
 <template>
   <div class="wk-shell-container">
-    <h1>Model Scripts</h1>
+    <h1 class="wk-title">Model Scripts</h1>
     <div class="wk-shell-commands">
       <div class="wk-command" v-for="(item, index) in codeContent" :key="item.code">
-        <pre @click="copyToClipboard(index)"><code>{{ item.code }}</code></pre>
-        <span>{{ item.description }}</span>
+        <div class="wk-command-content">
+          <div class="wk-command-header">
+            <span class="wk-command-description">{{ item.description }}</span>
+          </div>
+          <pre @click="copyToClipboard(index)"><code>{{ item.code }}</code></pre>
+        </div>
       </div>
     </div>
   </div>
@@ -78,55 +82,95 @@ const copyToClipboard = async (index: number) => {
 </script>
 
 <style scoped>
+
+.wk-title {
+  color: #2c3e50;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 1rem 0 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #4a90e2;
+}
+
 .wk-shell-container {
-  padding: 20px;
+  padding: 10px;
   background: #f5f5f5;
   border-radius: 8px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .wk-shell-container h1 {
   color: #2c3e50;
-  margin-bottom: 20px;
-  font-size: 24px;
+  margin-bottom: 30px;
+  font-size: 28px;
+  text-align: center;
 }
 
 .wk-shell-commands {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  display: grid;
+  gap: 20px;
 }
 
 .wk-command {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 10px;
   background: white;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.wk-command:hover {
+  transform: translateY(-2px);
+}
+
+.wk-command-content {
+  padding: 16px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.wk-command-header {
+  margin-bottom: 12px;
+}
+
+.wk-command-description {
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 500;
+  display: block;
 }
 
 .wk-command pre {
   margin: 0;
-  padding: 8px 12px;
-  background: #2c3e50;
-  border-radius: 4px;
+  padding: 16px;
+  background: #1a2634;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
-  font-family: 'Courier New', monospace;
+  transition: all 0.2s ease;
+  font-family: 'Monaco', 'Courier New', monospace;
   font-size: 14px;
-  color: #fff;
+  line-height: 1.5;
+  color: #e6e6e6;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
   white-space: pre-wrap;
-  word-break: break-all;
+  word-wrap: break-word;
+}
+
+.wk-command pre code {
+  display: block;
+  width: 100%;
 }
 
 .wk-command pre:hover {
-  background: #3c4e60;
+  background: #2c3e50;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
 }
 
-.wk-command span {
-  color: #666;
-  font-size: 14px;
-  flex: 1;
+@media (min-width: 768px) {
+  .wk-shell-commands {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  }
 }
-</style> 
+</style>
