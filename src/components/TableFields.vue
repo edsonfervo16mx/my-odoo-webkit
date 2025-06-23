@@ -203,7 +203,7 @@ tr:hover {
 
 .wk-title {
   color: #2c3e50;
-  font-size: 1.8rem;
+  font-size: 1.2rem;
   font-weight: 600;
   margin: 1rem 0 1.5rem;
   padding-bottom: 0.5rem;
