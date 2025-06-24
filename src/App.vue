@@ -62,6 +62,7 @@ const setCurrentAction = () => {
 }
 
 const reloadApp = () => {
+  // console.log('reloadApp')
   // Reset all reactive values
   id.value = null
   menuId.value = null

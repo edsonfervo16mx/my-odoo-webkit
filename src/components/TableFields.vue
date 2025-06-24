@@ -17,6 +17,8 @@
       </button>
     </div>
     <div class="table-responsive">
+      <pre>{{ model }}</pre>
+      <pre>{{ id }}</pre>
       <table>
         <thead>
           <tr>
@@ -38,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 
 const data: any = ref({})
 const searchQuery = ref('')
@@ -97,6 +99,11 @@ const getSessionId = (): string => {
 }
 
 const web_read = async () => {
+  if (!props.model || !props.id){
+    // console.log('no model or id')
+    return
+  }
+  
   const url = `http://localhost:8069/web/dataset/call_kw/${props.model}/read`
   const sessionId = getSessionId()
   
@@ -121,6 +128,13 @@ const web_read = async () => {
   })
   data.value = await payload.json()
 }
+
+watch(() => props.id, async () => {
+  if (props.id) {
+    // console.log('id changed', props.id)
+    await web_read()
+  }
+})
 
 onMounted(async () => {
   await web_read()
