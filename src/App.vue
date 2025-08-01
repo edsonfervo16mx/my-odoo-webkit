@@ -96,9 +96,39 @@ const toggleDebugMode = () => {
   const hash = window.location.hash
   window.location.href = url.toString() + hash
 }
+const endpointUrlOdooWebkit = ref<string | null>(localStorage.getItem('endpointUrlOdooWebkit') || 'http://localhost:8069')
+
+const saveEndpoint = () => {
+  console.log('saveEndpoint', endpointUrlOdooWebkit.value)
+  const is_changed = localStorage.getItem('endpointUrlOdooWebkit') !== endpointUrlOdooWebkit.value
+  localStorage.setItem('endpointUrlOdooWebkit', endpointUrlOdooWebkit.value || 'http://localhost:8069/')
+  endpointUrlOdooWebkit.value = localStorage.getItem('endpointUrlOdooWebkit') || 'http://localhost:8069/'
+  console.log('saveEndpoint', endpointUrlOdooWebkit.value)
+  // Show success message
+  if (is_changed) {
+    console.log('Endpoint changed')
+    const successMessage = document.createElement('div')
+    successMessage.textContent = 'Endpoint saved! Reloading...'
+    successMessage.style.position = 'fixed'
+    successMessage.style.bottom = '20px'
+    successMessage.style.right = '20px'
+    successMessage.style.backgroundColor = '#4CAF50'
+    successMessage.style.color = 'white'
+    successMessage.style.padding = '10px 20px'
+    successMessage.style.borderRadius = '4px'
+    successMessage.style.zIndex = '9999'
+    document.body.appendChild(successMessage)
+
+    // Reload page after 1/4 second
+    setTimeout(() => {
+        window.location.reload()
+      }, 250)
+  }
+}
 
 parseOdooUrl()
 setCurrentAction()
+saveEndpoint()
 
 </script>
 
@@ -125,6 +155,26 @@ setCurrentAction()
             <div class="wk-router-view-container">
               <div class="wk-model-manager-container">
                 <h1 class="wk-model-manager-title">Odoo Tools for developers</h1>
+                <div class="wk-endpoint-container">
+                  <div class="wk-endpoint-input-container">
+                    <label for="wk-endpoint-input">Endpoint URL</label>
+                    <div class="wk-input-button-group">
+                      <input 
+                        type="text" 
+                        class="wk-endpoint-input"
+                        placeholder="Enter endpoint URL"
+                        v-model="endpointUrlOdooWebkit"
+                      >
+                      <button 
+                        class="wk-save-endpoint-btn"
+                        @click="saveEndpoint"
+                        title="Save Endpoint"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <div class="wk-tabs">
                   <button 
                     v-for="tab in tabs" 
@@ -366,5 +416,60 @@ setCurrentAction()
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.wk-endpoint-input-container {
+  margin-bottom: 20px !important;
+}
+
+.wk-endpoint-input-container label {
+  display: block !important;
+  margin-bottom: 8px !important;
+  font-weight: 500 !important;
+  color: #333 !important;
+}
+
+.wk-input-button-group {
+  display: flex !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+.wk-endpoint-input {
+  flex: 1 !important;
+  padding: 8px 12px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  font-size: 14px !important;
+  min-width: 0;
+}
+
+.wk-endpoint-input:focus {
+  outline: none !important;
+  border-color: #4a90e2 !important;
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.3) !important;
+}
+
+.wk-save-endpoint-btn {
+  padding: 8px 16px !important;
+  background-color: #875A7B !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  white-space: nowrap !important;
+}
+
+.wk-save-endpoint-btn:hover {
+  background-color: #6d4862 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.wk-save-endpoint-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: none !important;
 }
 </style>

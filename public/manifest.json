@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "my-odoo-webkit",
-    "version": "1.0",
+    "version": "1.0", 
     "description": "Extension for Odoo development",
     "permissions": [
       "scripting",
@@ -9,7 +9,7 @@
     ],
     "content_scripts": [
       {
-        "matches": ["http://localhost:8069/*"],
+        "matches": ["http://localhost:8069/*", "https://*.odoo.com/*"],
         "js": ["assets/content.js"],
         "css": ["assets/main.css"]
       }
@@ -26,4 +26,3 @@
       "48": "favicon.ico"
     }
 }
-  

@@ -104,7 +104,9 @@ const web_read = async () => {
     return
   }
   
-  const url = `http://localhost:8069/web/dataset/call_kw/${props.model}/read`
+  const endpointUrl = localStorage.getItem('endpointUrlOdooWebkit') || 'http://localhost:8069/'
+  const url = `${endpointUrl}/web/dataset/call_kw/${props.model}/read`
+  console.log('Sending request to', url)
   const sessionId = getSessionId()
   
   const payload = await fetch(url, {

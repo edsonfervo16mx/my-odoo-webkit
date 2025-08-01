@@ -79,7 +79,9 @@ const getSessionId = (): string => {
 }
 
 const get_fields = async () => {
-  const url = `http://localhost:8069/web/dataset/call_kw/${props.model}/fields_get`
+  const endpointUrl = localStorage.getItem('endpointUrlOdooWebkit') || 'http://localhost:8069/'
+  const url = `${endpointUrl}/web/dataset/call_kw/${props.model}/fields_get`
+  console.log('Sending request to', url)
   const sessionId = getSessionId()
   
   const payload = await fetch(url, {
