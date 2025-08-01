@@ -17,8 +17,8 @@
       </button>
     </div>
     <div class="table-responsive">
-      <pre>{{ model }}</pre>
-      <pre>{{ id }}</pre>
+      <!-- <pre>{{ model }}</pre>
+      <pre>{{ id }}</pre> -->
       <table>
         <thead>
           <tr>

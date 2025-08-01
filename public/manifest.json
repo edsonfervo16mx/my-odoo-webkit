@@ -1,28 +1,25 @@
 {
-    "manifest_version": 3,
-    "name": "my-odoo-webkit",
-    "version": "1.0", 
-    "description": "Extension for Odoo development",
-    "permissions": [
-      "scripting",
-      "activeTab"
-    ],
-    "content_scripts": [
-      {
-        "matches": ["http://localhost:8069/*", "https://*.odoo.com/*"],
-        "js": ["assets/content.js"],
-        "css": ["assets/main.css"]
-      }
-    ],
-    "web_accessible_resources": [
-      {
-        "resources": [
-          "assets/*"
-        ],
-        "matches": ["<all_urls>"]
-      }
-    ],
-    "icons": {
-      "48": "favicon.ico"
+  "manifest_version": 3,
+  "name": "my-odoo-webkit",
+  "version": "1.2.0", 
+  "description": "Extension for Odoo development",
+  "permissions": [],
+  "content_scripts": [
+    {
+      "matches": ["http://localhost:8069/*", "https://*.odoo.com/*", "http://localhost:*/*"],
+      "js": ["assets/content.js"],
+      "css": ["assets/main.css"]
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "48": "favicon.ico"
+  }
 }
