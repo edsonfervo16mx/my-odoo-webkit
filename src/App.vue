@@ -67,8 +67,8 @@ const parseLegacyUrl = () => {
 
 // ── New-format parser (v17+ / v18 / v19 path-based) ────────────────────────
 
-// Static fallback for the most common Odoo modules
-const SLUG_MODEL_MAP: Record<string, string> = {
+// Slug → model map: configurable by the user, persisted in localStorage
+const DEFAULT_SLUG_MAP: Record<string, string> = {
   'crm':             'crm.lead',
   'contacts':        'res.partner',
   'sales':           'sale.order',
@@ -94,6 +94,44 @@ const SLUG_MODEL_MAP: Record<string, string> = {
   'subscriptions':   'sale.order',
   'members':         'res.partner',
   'point-of-sale':   'pos.session',
+}
+
+const loadSlugMap = (): Record<string, string> => {
+  try {
+    const stored = localStorage.getItem('slugModelMapOdooWebkit')
+    if (stored) return JSON.parse(stored)
+  } catch {}
+  return { ...DEFAULT_SLUG_MAP }
+}
+
+const slugModelMap = ref<Record<string, string>>(loadSlugMap())
+const newSlugKey   = ref('')
+const newSlugValue = ref('')
+
+const saveSlugMap = () => {
+  localStorage.setItem('slugModelMapOdooWebkit', JSON.stringify(slugModelMap.value))
+}
+
+const addSlugEntry = () => {
+  const k = newSlugKey.value.trim()
+  const v = newSlugValue.value.trim()
+  if (!k || !v) return
+  slugModelMap.value = { ...slugModelMap.value, [k]: v }
+  saveSlugMap()
+  newSlugKey.value   = ''
+  newSlugValue.value = ''
+}
+
+const removeSlugEntry = (key: string) => {
+  const copy = { ...slugModelMap.value }
+  delete copy[key]
+  slugModelMap.value = copy
+  saveSlugMap()
+}
+
+const resetSlugMap = () => {
+  slugModelMap.value = { ...DEFAULT_SLUG_MAP }
+  saveSlugMap()
 }
 
 // Strategy 1: read model from Odoo's OWL component tree (no network call)
@@ -180,8 +218,8 @@ const parseNewUrl = async () => {
   const rpcOk = await resolveModelFromSlug(slug)
   if (rpcOk) return
 
-  // Strategy 3: static slug → model map
-  const staticModel = SLUG_MODEL_MAP[slug] ?? null
+  // Strategy 3: user-configured slug → model map
+  const staticModel = slugModelMap.value[slug] ?? null
   if (staticModel) model.value = staticModel
 }
 
@@ -435,10 +473,70 @@ setCurrentAction()
               </label>
             </div>
           </div>
+
+          <!-- Slug → Model map: only visible in New mode -->
+          <div v-if="odooVersion === 'new'" class="wk-field-group">
+            <label class="wk-label">Slug → Model Map</label>
+            <p class="wk-hint">
+              Mapeo de slugs de URL (<code>/odoo/<b>slug</b>/id</code>) a nombres técnicos de modelos.
+              Se usa como fallback cuando la detección automática falla.
+            </p>
+
+            <div class="wk-slug-list">
+              <div
+                v-for="(modelVal, slugKey) in slugModelMap"
+                :key="String(slugKey)"
+                class="wk-slug-row"
+              >
+                <span class="wk-slug-row__key">{{ slugKey }}</span>
+                <span class="wk-slug-row__sep">→</span>
+                <span class="wk-slug-row__val">{{ modelVal }}</span>
+                <button
+                  class="wk-slug-row__del"
+                  title="Eliminar"
+                  @click="removeSlugEntry(String(slugKey))"
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+              <p v-if="Object.keys(slugModelMap).length === 0" class="wk-slug-empty">
+                Sin entradas configuradas
+              </p>
+            </div>
+
+            <div class="wk-slug-add">
+              <input
+                type="text"
+                class="wk-input wk-input--sm"
+                placeholder="slug"
+                v-model="newSlugKey"
+                @keydown.enter="addSlugEntry"
+              />
+              <span class="wk-slug-add__sep">→</span>
+              <input
+                type="text"
+                class="wk-input wk-input--sm"
+                placeholder="model.name"
+                v-model="newSlugValue"
+                @keydown.enter="addSlugEntry"
+              />
+              <button class="wk-btn wk-btn--primary wk-btn--icon" @click="addSlugEntry" title="Agregar">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+
+            <button class="wk-link-btn" @click="resetSlugMap">
+              Restaurar valores por defecto
+            </button>
+          </div>
         </div>
         <div class="wk-settings__footer">
           <p>By <a href="https://edsonfervo16mx.github.io/" target="_blank">@edsonfervo16mx</a></p>
-          <span class="wk-version">v1.2.1</span>
+          <span class="wk-version">v1.3.1</span>
         </div>
       </div>
 
@@ -817,5 +915,121 @@ setCurrentAction()
 .wk-radio-option__hint {
   font-size: 11px;
   color: var(--wk-text-muted);
+}
+
+/* ── Slug → Model map ── */
+.wk-slug-list {
+  border: 1px solid var(--wk-border);
+  border-radius: var(--wk-radius-sm);
+  overflow: hidden;
+  margin-bottom: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.wk-slug-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--wk-bg);
+  border-bottom: 1px solid var(--wk-border);
+  font-size: 12px;
+}
+
+.wk-slug-row:last-child {
+  border-bottom: none;
+}
+
+.wk-slug-row__key {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--wk-accent);
+  min-width: 80px;
+}
+
+.wk-slug-row__sep {
+  color: var(--wk-text-muted);
+  flex-shrink: 0;
+}
+
+.wk-slug-row__val {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  color: var(--wk-text-secondary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wk-slug-row__del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--wk-text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--wk-transition), color var(--wk-transition);
+}
+
+.wk-slug-row__del:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.wk-slug-empty {
+  padding: 12px 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--wk-text-muted);
+  background: var(--wk-bg);
+}
+
+.wk-slug-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.wk-slug-add__sep {
+  font-size: 12px;
+  color: var(--wk-text-muted);
+  flex-shrink: 0;
+}
+
+.wk-input--sm {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.wk-btn--icon {
+  padding: 6px 8px;
+  flex-shrink: 0;
+}
+
+.wk-link-btn {
+  display: inline-block;
+  border: none;
+  background: transparent;
+  color: var(--wk-accent);
+  font-size: 11.5px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--wk-transition);
+}
+
+.wk-link-btn:hover {
+  color: var(--wk-accent-hover);
 }
 </style>
