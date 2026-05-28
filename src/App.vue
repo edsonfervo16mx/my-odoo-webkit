@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import ModelDescriptionTab from './components/ModelDescriptionTab.vue'
 import ModelScriptsTab from './components/ModelScriptsTab.vue'
 import MiscTab from './components/MiscTab.vue'
@@ -26,42 +26,201 @@ const tabs = [
   { id: 'shell', name: 'Shell' },
 ]
 
-const parseOdooUrl = () => {
+// ── Version config ──────────────────────────────────────────────────────────
+type OdooVersionMode = 'auto' | 'legacy' | 'new'
+const odooVersion = ref<OdooVersionMode>(
+  (localStorage.getItem('odooVersionOdooWebkit') as OdooVersionMode) || 'auto'
+)
+const versionOptions: { value: OdooVersionMode; label: string; hint: string }[] = [
+  { value: 'auto',   label: 'Auto-detect',          hint: 'Detecta el formato según la URL actual' },
+  { value: 'legacy', label: 'Legacy  (v15 / v16 / v17)', hint: 'URLs con hash: /web#model=...' },
+  { value: 'new',    label: 'New  (v17+ / v18 / v19)',   hint: 'URLs con path: /odoo/crm/32' },
+]
+
+const saveOdooVersion = () => {
+  localStorage.setItem('odooVersionOdooWebkit', odooVersion.value)
+  reloadApp()
+}
+
+// ── URL format detection ────────────────────────────────────────────────────
+const getEffectiveMode = (): 'legacy' | 'new' => {
+  if (odooVersion.value === 'legacy') return 'legacy'
+  if (odooVersion.value === 'new')    return 'new'
+  // auto: inspect current URL
+  const hash = window.location.hash
+  if (hash && new URLSearchParams(hash.substring(1)).has('model')) return 'legacy'
+  if (window.location.pathname.startsWith('/odoo/')) return 'new'
+  return 'legacy'
+}
+
+// ── Legacy parser (v15 / v16 / v17 hash-based) ─────────────────────────────
+const parseLegacyUrl = () => {
   const hash = window.location.hash
   if (!hash) return
   const params = new URLSearchParams(hash.substring(1))
-  id.value = params.get('id')
-  menuId.value = params.get('menu_id')
-  action.value = params.get('action')
-  model.value = params.get('model')
+  id.value       = params.get('id')
+  menuId.value   = params.get('menu_id')
+  action.value   = params.get('action')
+  model.value    = params.get('model')
   viewType.value = params.get('view_type')
 }
 
+// ── New-format parser (v17+ / v18 / v19 path-based) ────────────────────────
+
+// Static fallback for the most common Odoo modules
+const SLUG_MODEL_MAP: Record<string, string> = {
+  'crm':             'crm.lead',
+  'contacts':        'res.partner',
+  'sales':           'sale.order',
+  'purchase':        'purchase.order',
+  'inventory':       'stock.picking',
+  'products':        'product.template',
+  'accounting':      'account.move',
+  'invoices':        'account.move',
+  'bills':           'account.move',
+  'credit-notes':    'account.move',
+  'employees':       'hr.employee',
+  'projects':        'project.project',
+  'tasks':           'project.task',
+  'helpdesk':        'helpdesk.ticket',
+  'timesheets':      'account.analytic.line',
+  'manufacturing':   'mrp.production',
+  'repairs':         'repair.order',
+  'fleet':           'fleet.vehicle',
+  'events':          'event.event',
+  'leaves':          'hr.leave',
+  'attendances':     'hr.attendance',
+  'payslips':        'hr.payslip',
+  'subscriptions':   'sale.order',
+  'members':         'res.partner',
+  'point-of-sale':   'pos.session',
+}
+
+// Strategy 1: read model from Odoo's OWL component tree (no network call)
+// Works once Odoo has finished rendering the view (~300 ms after navigation)
+const getModelFromPage = (): string | null => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tryEl = (sel: string): string | null => {
+      const el = document.querySelector(sel) as any
+      return el?.__owl__?.component?.props?.resModel ?? null
+    }
+    for (const sel of [
+      '.o_view_controller',
+      '.o_form_view',
+      '.o_list_view',
+      '.o_kanban_view',
+      '.o_activity_view',
+      '.o_pivot_view',
+      '.o_graph_view',
+      '.o_cohort_view',
+      '.o_map_view',
+    ]) {
+      const m = tryEl(sel)
+      if (m) return m
+    }
+    // Try via action service in the web client env
+    const wc = document.querySelector('.o_web_client') as any
+    const ctrl = wc?.__owl__?.component?.env?.services?.action?.currentController
+    return ctrl?.action?.res_model ?? null
+  } catch {
+    return null
+  }
+}
+
+// Strategy 2: RPC to ir.actions.act_window (path field, Odoo 17+)
+const resolveModelFromSlug = async (slug: string) => {
+  const base = localStorage.getItem('endpointUrlOdooWebkit') || 'http://localhost:8069'
+  try {
+    const resp = await fetch(`${base}/web/dataset/call_kw/ir.actions.act_window/search_read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        jsonrpc: '2.0', method: 'call', id: 1,
+        params: {
+          model: 'ir.actions.act_window',
+          method: 'search_read',
+          args: [['|', ['path', '=', slug], ['path', '=', `/${slug}`]]],
+          kwargs: { fields: ['res_model', 'id', 'context', 'domain', 'search_view_id'], limit: 1 }
+        }
+      })
+    })
+    const data = await resp.json()
+    if (data.result?.length > 0) {
+      const act = data.result[0]
+      model.value        = act.res_model || null
+      action.value       = act.id?.toString() || null
+      context.value      = act.context ? String(act.context) : null
+      domain.value       = act.domain  ? String(act.domain)  : null
+      searchViewId.value = Array.isArray(act.search_view_id)
+        ? act.search_view_id[0]?.toString() ?? null
+        : null
+      return true
+    }
+  } catch {}
+  return false
+}
+
+const parseNewUrl = async () => {
+  const match = window.location.pathname.match(/^\/odoo\/([^\/]+?)(?:\/(\d+))?(?:\/|$)/)
+  if (!match) return
+  const slug = match[1]
+  id.value       = match[2] || null
+  viewType.value = match[2] ? 'form' : 'list'
+
+  // Strategy 1: OWL component tree (fast, no network)
+  const owlModel = getModelFromPage()
+  if (owlModel) {
+    model.value = owlModel
+    return
+  }
+
+  // Strategy 2: RPC to ir.actions.act_window
+  const rpcOk = await resolveModelFromSlug(slug)
+  if (rpcOk) return
+
+  // Strategy 3: static slug → model map
+  const staticModel = SLUG_MODEL_MAP[slug] ?? null
+  if (staticModel) model.value = staticModel
+}
+
+// ── Dispatcher ──────────────────────────────────────────────────────────────
+const parseOdooUrl = async () => {
+  if (getEffectiveMode() === 'new') {
+    await parseNewUrl()
+  } else {
+    parseLegacyUrl()
+  }
+}
+
+// ── Session action (context / domain extras) ────────────────────────────────
 const setCurrentAction = () => {
   const currentAction = sessionStorage.getItem('current_action')
   if (currentAction) {
     try {
       const actionObj = JSON.parse(currentAction)
-      context.value = actionObj.context
-      domain.value = actionObj.domain
-      xmlId.value = actionObj.xml_id
+      context.value      = actionObj.context
+      domain.value       = actionObj.domain
+      xmlId.value        = actionObj.xml_id
       searchViewId.value = actionObj.search_view_id
     } catch {}
   }
 }
 
-const reloadApp = () => {
-  id.value = null
-  menuId.value = null
-  action.value = null
-  model.value = null
-  viewType.value = null
-  context.value = null
-  domain.value = null
-  xmlId.value = null
+// ── Reload ──────────────────────────────────────────────────────────────────
+const reloadApp = async () => {
+  id.value          = null
+  menuId.value      = null
+  action.value      = null
+  model.value       = null
+  viewType.value    = null
+  context.value     = null
+  domain.value      = null
+  xmlId.value       = null
   searchViewId.value = null
-  activeTab.value = 'description'
-  parseOdooUrl()
+  activeTab.value   = 'description'
+  await parseOdooUrl()
   setCurrentAction()
 }
 
@@ -75,6 +234,7 @@ const toggleDebugMode = () => {
   window.location.href = url.toString() + window.location.hash
 }
 
+// ── Endpoint config ─────────────────────────────────────────────────────────
 const endpointUrl = ref<string>(localStorage.getItem('endpointUrlOdooWebkit') || 'http://localhost:8069')
 
 const saveEndpoint = () => {
@@ -85,6 +245,39 @@ const saveEndpoint = () => {
   }
 }
 
+// ── Navigation detection (auto-refresh when URL changes) ────────────────────
+let _navTimer: ReturnType<typeof setTimeout> | null = null
+const handleNavigation = () => {
+  if (_navTimer) clearTimeout(_navTimer)
+  _navTimer = setTimeout(reloadApp, 300)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _origPush: any = null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _origReplace: any = null
+
+onMounted(() => {
+  window.addEventListener('hashchange', handleNavigation)
+  window.addEventListener('popstate',   handleNavigation)
+
+  _origPush    = window.history.pushState.bind(window.history)
+  _origReplace = window.history.replaceState.bind(window.history)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(window.history as any).pushState = (...args: any[]) => { _origPush(...args);    handleNavigation() }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(window.history as any).replaceState = (...args: any[]) => { _origReplace(...args); handleNavigation() }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('hashchange', handleNavigation)
+  window.removeEventListener('popstate',   handleNavigation)
+  if (_origPush)    window.history.pushState    = _origPush
+  if (_origReplace) window.history.replaceState = _origReplace
+})
+
+// ── Initial parse ───────────────────────────────────────────────────────────
 parseOdooUrl()
 setCurrentAction()
 </script>
@@ -215,6 +408,31 @@ setCurrentAction()
                 @keydown.enter="saveEndpoint"
               />
               <button class="wk-btn wk-btn--primary" @click="saveEndpoint">Save</button>
+            </div>
+          </div>
+
+          <div class="wk-field-group">
+            <label class="wk-label">Odoo Version</label>
+            <p class="wk-hint">Versión de Odoo para leer el modelo desde la URL. Usa Auto-detect si no sabes cuál elegir.</p>
+            <div class="wk-radio-group">
+              <label
+                v-for="opt in versionOptions"
+                :key="opt.value"
+                class="wk-radio-option"
+                :class="{ 'wk-radio-option--active': odooVersion === opt.value }"
+              >
+                <input
+                  type="radio"
+                  class="wk-radio"
+                  :value="opt.value"
+                  v-model="odooVersion"
+                  @change="saveOdooVersion"
+                />
+                <div class="wk-radio-option__content">
+                  <span class="wk-radio-option__label">{{ opt.label }}</span>
+                  <span class="wk-radio-option__hint">{{ opt.hint }}</span>
+                </div>
+              </label>
             </div>
           </div>
         </div>
@@ -547,5 +765,57 @@ setCurrentAction()
   background: var(--wk-accent-hover);
   transform: scale(1.07);
   box-shadow: 0 4px 16px rgba(135, 90, 123, 0.5);
+}
+
+/* ── Version selector ── */
+.wk-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wk-radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--wk-border);
+  border-radius: var(--wk-radius-sm);
+  cursor: pointer;
+  transition: border-color var(--wk-transition), background var(--wk-transition);
+}
+
+.wk-radio-option:hover {
+  border-color: var(--wk-accent);
+  background: var(--wk-accent-faint);
+}
+
+.wk-radio-option--active {
+  border-color: var(--wk-accent);
+  background: var(--wk-accent-faint);
+}
+
+.wk-radio {
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--wk-accent);
+  cursor: pointer;
+}
+
+.wk-radio-option__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.wk-radio-option__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--wk-text-primary);
+}
+
+.wk-radio-option__hint {
+  font-size: 11px;
+  color: var(--wk-text-muted);
 }
 </style>
