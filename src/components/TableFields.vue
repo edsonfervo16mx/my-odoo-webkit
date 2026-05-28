@@ -25,18 +25,22 @@
     </div>
 
     <div class="wk-field-list">
-      <div
-        v-for="(value, key) in filteredData"
-        :key="key"
-        class="wk-field-row"
-        :class="{ 'wk-field-row--copied': lastValueCopied === String(key) }"
-        @click="copyValue(formatValue(value), String(key))"
-      >
-        <div class="wk-field-row__key">
-          {{ key }}
-          <span class="wk-field-row__badge">{{ lastValueCopied === String(key) ? '✓ Copied' : 'copy' }}</span>
+      <div v-for="(value, key) in filteredData" :key="key" class="wk-field-row">
+        <div
+          class="wk-field-row__key-area"
+          :class="{ 'wk-copied--key': lastKeyCopied === String(key) }"
+          @click.stop="copyKey(String(key))"
+          title="Copy field name"
+        >
+          <span class="wk-field-row__key">{{ key }}</span>
+          <span class="wk-field-row__badge">{{ lastKeyCopied === String(key) ? '✓' : 'key' }}</span>
         </div>
-        <pre class="wk-field-row__val">{{ formatValue(value) }}</pre>
+        <pre
+          class="wk-field-row__val"
+          :class="{ 'wk-copied--val': lastValueCopied === String(key) }"
+          @click.stop="copyValue(formatValue(value), String(key))"
+          title="Copy value"
+        >{{ formatValue(value) }}<span class="wk-val-badge">{{ lastValueCopied === String(key) ? '✓ Copied' : 'copy' }}</span></pre>
       </div>
       <div v-if="Object.keys(filteredData).length === 0" class="wk-table-empty">
         {{ searchQuery ? 'No matching fields' : 'No data available' }}
@@ -52,6 +56,7 @@ const data: any = ref({})
 const searchQuery = ref('')
 const copied = ref(false)
 const lastValueCopied = ref<string | null>(null)
+const lastKeyCopied = ref<string | null>(null)
 
 const props = defineProps<{
   model: string | null
@@ -79,6 +84,14 @@ const formatValue = (value: any): string => {
   if (value === null || value === undefined) return ''
   if (Array.isArray(value) || typeof value === 'object') return JSON.stringify(value, null, 2)
   return String(value)
+}
+
+const copyKey = async (key: string) => {
+  try {
+    await navigator.clipboard.writeText(key)
+    lastKeyCopied.value = key
+    setTimeout(() => { lastKeyCopied.value = null }, 1500)
+  } catch {}
 }
 
 const copyValue = async (text: string, key: string) => {
@@ -205,33 +218,35 @@ onMounted(async () => { await web_read() })
 }
 
 .wk-field-row {
-  position: relative;
-  padding: 8px 16px;
   border-bottom: 1px solid var(--wk-border);
+}
+
+/* ── Key area ── */
+.wk-field-row__key-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px 3px;
   cursor: pointer;
   transition: background var(--wk-transition);
 }
 
-.wk-field-row:hover {
-  background: var(--wk-bg-elevated);
+.wk-field-row__key-area:hover {
+  background: var(--wk-accent-faint);
 }
 
-.wk-field-row--copied {
+.wk-copied--key {
   background: var(--wk-success-bg) !important;
 }
 
 .wk-field-row__key {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
   font-size: 11px;
   font-weight: 600;
   color: var(--wk-accent);
-  margin-bottom: 3px;
 }
 
-.wk-field-row--copied .wk-field-row__key {
+.wk-copied--key .wk-field-row__key {
   color: var(--wk-success);
 }
 
@@ -244,17 +259,20 @@ onMounted(async () => { await web_read() })
   transition: opacity var(--wk-transition);
 }
 
-.wk-field-row:hover .wk-field-row__badge {
+.wk-field-row__key-area:hover .wk-field-row__badge {
   opacity: 1;
 }
 
-.wk-field-row--copied .wk-field-row__badge {
+.wk-copied--key .wk-field-row__badge {
   opacity: 1;
   color: var(--wk-success);
 }
 
+/* ── Value area ── */
 .wk-field-row__val {
+  position: relative;
   margin: 0;
+  padding: 3px 16px 8px;
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
   font-size: 12px;
   line-height: 1.5;
@@ -262,6 +280,37 @@ onMounted(async () => { await web_read() })
   white-space: pre-wrap;
   word-break: break-all;
   width: 100%;
+  cursor: pointer;
+  transition: background var(--wk-transition);
+}
+
+.wk-field-row__val:hover {
+  background: var(--wk-bg-elevated);
+}
+
+.wk-copied--val {
+  background: var(--wk-success-bg) !important;
+  color: var(--wk-success) !important;
+}
+
+.wk-val-badge {
+  display: block;
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--wk-text-muted);
+  opacity: 0;
+  transition: opacity var(--wk-transition);
+  margin-top: 2px;
+}
+
+.wk-field-row__val:hover .wk-val-badge {
+  opacity: 1;
+}
+
+.wk-copied--val .wk-val-badge {
+  opacity: 1;
+  color: var(--wk-success);
 }
 
 .wk-table-empty {
