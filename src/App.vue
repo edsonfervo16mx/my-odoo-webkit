@@ -250,8 +250,8 @@ setCurrentAction()
 .wk-sidebar {
   position: absolute;
   top: 0;
-  right: -380px;
-  width: 380px;
+  right: -480px;
+  width: 480px;
   height: 100vh;
   background: var(--wk-bg);
   box-shadow: -6px 0 32px rgba(0, 0, 0, 0.10), -1px 0 0 var(--wk-border);
