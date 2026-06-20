@@ -1,174 +1,294 @@
 <template>
-  <div class="wk-tab-pane">
-    <div class="wk-collapsible">
-      <div class="wk-collapsible-header" @click="toggleCollapse">
-        <h3 class="wk-model-info-title">Model Information</h3>
-        <span class="wk-collapse-icon">{{ isCollapsed ? '▼' : '▲' }}</span>
+  <div class="wk-desc">
+
+    <!-- Model hero card -->
+    <div class="wk-hero">
+      <div class="wk-hero__main">
+        <div class="wk-hero__label">Model</div>
+        <div class="wk-hero__model" @click="copy(model, 'model')" :class="{ 'wk-copied': lastCopied === 'model' }">
+          {{ model ?? '—' }}
+          <span class="wk-copy-badge">{{ lastCopied === 'model' ? '✓' : '' }}</span>
+        </div>
       </div>
-      <div class="wk-model-info" v-show="!isCollapsed">
-        <div class="wk-model-info-grid">
-          <div class="wk-info-item">
-            <span class="wk-info-label">Model</span>
-            <span class="wk-info-value"><pre @click="copyToClipboard(model)"><code>{{ model }}</code></pre></span>
-          </div>
-          <div class="wk-info-item">
-            <span class="wk-info-label">ID</span>
-            <span class="wk-info-value"><pre @click="copyToClipboard(id)"><code>{{ id }}</code></pre></span>
-          </div>
-          <div class="wk-info-item">
-            <span class="wk-info-label">Action</span>
-            <span class="wk-info-value"><pre @click="copyToClipboard(action)"><code>{{ action }}</code></pre></span>
-          </div>
-          <div class="wk-info-item">
-            <span class="wk-info-label">View Type</span>
-            <span class="wk-info-value"><pre @click="copyToClipboard(viewType)"><code>{{ viewType }}</code></pre></span>
-          </div>
-          <div class="wk-info-item">
-            <span class="wk-info-label">Context</span>
-            <span class="wk-info-value"><pre @click="copyToClipboard(context)"><code>{{ context }}</code></pre></span>
-          </div>
-          <div class="wk-info-item">
-            <span class="wk-info-label">Domain</span>
-            <span class="wk-info-value"><pre @click="copyToClipboard(domain)"><code>{{ domain }}</code></pre></span>
-          </div>
-          <div class="wk-info-item">
-            <span class="wk-info-label">XML ID</span>
-            <span class="wk-info-value"><pre @click="copyToClipboard(xmlId)"><code>{{ xmlId }}</code></pre></span>
-          </div>
-          <div class="wk-info-item">
-            <span class="wk-info-label">Search View ID</span>
-            <span class="wk-info-value"><pre @click="copyToClipboard(searchViewId)"><code>{{ searchViewId }}</code></pre></span>
-          </div>
+      <div class="wk-hero__meta">
+        <div class="wk-meta-chip" @click="copy(id, 'id')" :class="{ 'wk-copied': lastCopied === 'id' }">
+          <span class="wk-meta-chip__label">ID</span>
+          <span class="wk-meta-chip__value">{{ id ?? '—' }}</span>
+        </div>
+        <div class="wk-meta-chip" @click="copy(viewType, 'viewType')" :class="{ 'wk-copied': lastCopied === 'viewType' }">
+          <span class="wk-meta-chip__label">View</span>
+          <span class="wk-meta-chip__value">{{ viewType ?? '—' }}</span>
+        </div>
+        <div class="wk-meta-chip" @click="copy(action, 'action')" :class="{ 'wk-copied': lastCopied === 'action' }">
+          <span class="wk-meta-chip__label">Action</span>
+          <span class="wk-meta-chip__value">{{ action ?? '—' }}</span>
         </div>
       </div>
     </div>
+
+    <!-- Technical details (collapsible) -->
+    <div class="wk-details">
+      <button class="wk-details__toggle" @click="showDetails = !showDetails">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+          :style="{ transform: showDetails ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+        <span>Technical details</span>
+      </button>
+      <div v-if="showDetails" class="wk-details__grid">
+        <div v-for="item in detailItems" :key="item.key" class="wk-detail-item">
+          <span class="wk-detail-item__label">{{ item.label }}</span>
+          <pre class="wk-codeblock" @click="copy(item.value, item.key)" :class="{ 'wk-codeblock--copied': lastCopied === item.key }">
+            <code>{{ item.value ?? '—' }}</code>
+            <span class="wk-codeblock__hint">{{ lastCopied === item.key ? '✓ Copied' : 'Click to copy' }}</span>
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Record data table -->
+    <TableFields :model="model" :id="id" v-if="model && id" />
   </div>
-  <TableFields :model="model" :id="id" v-if="model && id"/>
 </template>
 
 <script setup lang="ts">
 import TableFields from './TableFields.vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   model: string | null
   id: string | null
   action: string | null
   viewType: string | null
-  context: string | null,
-  domain: string | null,
-  xmlId: string | null,
+  context: string | null
+  domain: string | null
+  xmlId: string | null
   searchViewId: string | null
 }>()
 
-const isCollapsed = ref(true)
+const showDetails = ref(false)
+const lastCopied = ref<string | null>(null)
 
-const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
-}
+const detailItems = computed(() => [
+  { key: 'context', label: 'Context', value: props.context },
+  { key: 'domain', label: 'Domain', value: props.domain },
+  { key: 'xmlId', label: 'XML ID', value: props.xmlId },
+  { key: 'searchViewId', label: 'Search View ID', value: props.searchViewId },
+])
 
-const copyToClipboard = async (text: string | null) => {
-  if (!text) return;
-  
+const copy = async (text: string | null, key: string) => {
+  if (!text) return
   try {
-    await navigator.clipboard.writeText(text);
-    // alert('Text copied to clipboard!');
-  } catch (err) {
-    console.error('Failed to copy text: ', err);
-    // alert('Failed to copy text to clipboard');
-  }
-};
+    await navigator.clipboard.writeText(text)
+    lastCopied.value = key
+    setTimeout(() => { lastCopied.value = null }, 1500)
+  } catch {}
+}
 </script>
 
 <style scoped>
-.wk-collapsible {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 16px;
-  cursor: pointer;
+.wk-desc {
+  padding: 0;
 }
 
-.wk-collapsible-header {
-  padding: 8px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* ── Hero card ── */
+.wk-hero {
+  background: var(--wk-bg);
+  border-bottom: 1px solid var(--wk-border);
+  padding: 14px 16px 12px;
 }
 
-.wk-collapse-icon {
-  font-size: 1rem;
-  color: #6c757d;
+.wk-hero__main {
+  margin-bottom: 10px;
 }
 
-.wk-model-info {
-  padding: 0 16px 16px 16px;
-}
-
-.wk-model-info-title {
-  color: #2c3e50;
-  font-size: 1.2rem;
-  margin: 0;
-}
-
-.wk-model-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.wk-info-item {
-  padding: 8px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.wk-info-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.wk-info-label {
-  display: block;
-  color: #6c757d;
-  font-size: 0.8rem;
-  margin-bottom: 2px;
-  font-weight: 500;
-}
-
-.wk-info-value {
-  display: block;
-  color: #2c3e50;
-  font-size: 0.9rem;
+.wk-hero__label {
+  font-size: 10.5px;
   font-weight: 600;
-  word-break: break-all;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--wk-text-muted);
+  margin-bottom: 4px;
 }
 
-.wk-info-value pre {
-  margin: 0;
-  padding: 8px;
-  background: #1a2634;
-  border-radius: 4px;
-  font-family: 'Monaco', 'Courier New', monospace;
+.wk-hero__model {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--wk-text-primary);
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: var(--wk-radius-sm);
+  transition: background var(--wk-transition), color var(--wk-transition);
+  margin: -4px -8px;
+}
+
+.wk-hero__model:hover {
+  background: var(--wk-accent-faint);
+  color: var(--wk-accent);
+}
+
+.wk-hero__model.wk-copied {
+  background: var(--wk-success-bg);
+  color: var(--wk-success);
+}
+
+.wk-copy-badge {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 12px;
+}
+
+.wk-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── Meta chips ── */
+.wk-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 6px;
+  border: 1px solid var(--wk-border);
+  border-radius: 20px;
+  cursor: pointer;
+  background: var(--wk-bg-surface);
+  transition: all var(--wk-transition);
+}
+
+.wk-meta-chip:hover {
+  border-color: var(--wk-accent);
+  background: var(--wk-accent-faint);
+}
+
+.wk-meta-chip.wk-copied {
+  border-color: var(--wk-success-border);
+  background: var(--wk-success-bg);
+}
+
+.wk-meta-chip__label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--wk-text-muted);
+}
+
+.wk-meta-chip__value {
   font-size: 12px;
-  line-height: 1.4;
-  color: #e6e6e6;
+  font-weight: 600;
+  color: var(--wk-text-primary);
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.wk-meta-chip.wk-copied .wk-meta-chip__value {
+  color: var(--wk-success);
+}
+
+/* ── Details section ── */
+.wk-details {
+  border-bottom: 1px solid var(--wk-border);
+  background: var(--wk-bg);
+}
+
+.wk-details__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--wk-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: color var(--wk-transition), background var(--wk-transition);
+  text-align: left;
+}
+
+.wk-details__toggle:hover {
+  color: var(--wk-text-secondary);
+  background: var(--wk-bg-surface);
+}
+
+.wk-details__grid {
+  display: grid;
+  gap: 10px;
+  padding: 0 16px 14px;
+}
+
+.wk-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wk-detail-item__label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--wk-text-muted);
+}
+
+/* ── Code block ── */
+.wk-codeblock {
+  position: relative;
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--wk-code-bg);
+  border-radius: var(--wk-radius-sm);
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--wk-code-text);
   overflow-x: auto;
   white-space: pre-wrap;
   word-wrap: break-word;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background var(--wk-transition), box-shadow var(--wk-transition);
 }
 
-.wk-info-value pre:hover {
-  background: #2c3e50;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
+.wk-codeblock:hover {
+  background: var(--wk-code-bg-hover);
+  box-shadow: 0 0 0 2px var(--wk-accent-light);
 }
 
-.wk-info-value pre code {
+.wk-codeblock--copied {
+  background: #052e16 !important;
+  box-shadow: 0 0 0 2px var(--wk-success-border) !important;
+}
+
+.wk-codeblock code {
   display: block;
-  width: 100%;
+}
+
+.wk-codeblock__hint {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #64748b;
+  opacity: 0;
+  transition: opacity var(--wk-transition);
+  font-family: -apple-system, sans-serif;
+}
+
+.wk-codeblock:hover .wk-codeblock__hint {
+  opacity: 1;
+}
+
+.wk-codeblock--copied .wk-codeblock__hint {
+  opacity: 1;
+  color: var(--wk-success);
 }
 </style>
