@@ -1,40 +1,50 @@
 <template>
-  <div>
-    <h1 class="wk-title">Table Fields</h1>
-    <div class="search-container">
-      <input 
-        type="text" 
-        v-model="searchQuery"
-        placeholder="Search by field or value..."
-        class="search-input"
-      />
-      <button 
-        class="copy-button"
-        @click="copyDataToClipboard"
-        title="Copy all data as JSON"
-      >
-        Copy All Data
+  <div class="wk-table-wrap">
+    <div class="wk-table-toolbar">
+      <div class="wk-search-wrap">
+        <svg class="wk-search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search field or value…"
+          class="wk-search-input"
+        />
+      </div>
+      <button class="wk-copy-btn" @click="copyDataToClipboard" :class="{ 'wk-copy-btn--copied': copied }">
+        <svg v-if="!copied" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        {{ copied ? 'Copied!' : 'Copy JSON' }}
       </button>
     </div>
-    <div class="table-responsive">
-      <pre>{{ model }}</pre>
-      <pre>{{ id }}</pre>
-      <table>
-        <thead>
-          <tr>
-            <th>Field</th>
-            <th>Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(value, key) in filteredData" :key="key">
-            <td>{{ key }}</td>
-            <td>
-                <pre>{{ formatValue(value) }}</pre>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+
+    <div class="wk-field-list">
+      <div v-for="(value, key) in filteredData" :key="key" class="wk-field-row">
+        <div
+          class="wk-field-row__key-area"
+          :class="{ 'wk-copied--key': lastKeyCopied === String(key) }"
+          @click.stop="copyKey(String(key))"
+          title="Copy field name"
+        >
+          <span class="wk-field-row__key">{{ key }}</span>
+          <span class="wk-field-row__badge">{{ lastKeyCopied === String(key) ? '✓' : 'key' }}</span>
+        </div>
+        <pre
+          class="wk-field-row__val"
+          :class="{ 'wk-copied--val': lastValueCopied === String(key) }"
+          @click.stop="copyValue(formatValue(value), String(key))"
+          title="Copy value"
+        >{{ formatValue(value) }}<span class="wk-val-badge">{{ lastValueCopied === String(key) ? '✓ Copied' : 'copy' }}</span></pre>
+      </div>
+      <div v-if="Object.keys(filteredData).length === 0" class="wk-table-empty">
+        {{ searchQuery ? 'No matching fields' : 'No data available' }}
+      </div>
     </div>
   </div>
 </template>
@@ -44,6 +54,10 @@ import { onMounted, ref, computed, watch } from 'vue'
 
 const data: any = ref({})
 const searchQuery = ref('')
+const copied = ref(false)
+const lastValueCopied = ref<string | null>(null)
+const lastKeyCopied = ref<string | null>(null)
+
 const props = defineProps<{
   model: string | null
   id: string | null
@@ -56,186 +70,253 @@ const firstLevelData = computed(() => {
 
 const filteredData = computed(() => {
   if (!searchQuery.value) return firstLevelData.value
-  
   const query = searchQuery.value.toLowerCase()
   const result: Record<string, any> = {}
-  
   Object.entries(firstLevelData.value).forEach(([key, value]) => {
-    const formattedValue = formatValue(value).toLowerCase()
-    if (
-      key.toLowerCase().includes(query) || 
-      formattedValue.includes(query)
-    ) {
+    if (key.toLowerCase().includes(query) || formatValue(value).toLowerCase().includes(query)) {
       result[key] = value
     }
   })
-  
   return result
 })
 
 const formatValue = (value: any): string => {
   if (value === null || value === undefined) return ''
-  if (Array.isArray(value)) return JSON.stringify(value, null, 2)
-  if (typeof value === 'object') return JSON.stringify(value, null, 2) 
+  if (Array.isArray(value) || typeof value === 'object') return JSON.stringify(value, null, 2)
   return String(value)
 }
 
-const copyDataToClipboard = () => {
-  const jsonData = JSON.stringify(data.value, null, 2)
-  navigator.clipboard.writeText(jsonData)
-    .then(() => {
-    //   alert('Data copied to clipboard!')
-    })
-    .catch(err => {
-      console.error('Failed to copy data:', err)
-    //   alert('Failed to copy data to clipboard')
-    })
+const copyKey = async (key: string) => {
+  try {
+    await navigator.clipboard.writeText(key)
+    lastKeyCopied.value = key
+    setTimeout(() => { lastKeyCopied.value = null }, 1500)
+  } catch {}
+}
+
+const copyValue = async (text: string, key: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    lastValueCopied.value = key
+    setTimeout(() => { lastValueCopied.value = null }, 1500)
+  } catch {}
+}
+
+const copyDataToClipboard = async () => {
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(data.value, null, 2))
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 1800)
+  } catch {}
 }
 
 const getSessionId = (): string => {
-  const cookies = document.cookie.split(';')
-  const sessionCookie = cookies.find(cookie => cookie.trim().startsWith('session_id='))
-  return sessionCookie ? sessionCookie.split('=')[1].trim() : ''
+  const c = document.cookie.split(';').find(c => c.trim().startsWith('session_id='))
+  return c ? c.split('=')[1].trim() : ''
 }
 
 const web_read = async () => {
-  if (!props.model || !props.id){
-    // console.log('no model or id')
-    return
-  }
-  
-  const url = `http://localhost:8069/web/dataset/call_kw/${props.model}/read`
-  const sessionId = getSessionId()
-  
+  if (!props.model || !props.id) return
+  const endpointUrl = localStorage.getItem('endpointUrlOdooWebkit') || 'http://localhost:8069'
+  const url = `${endpointUrl}/web/dataset/call_kw/${props.model}/read`
   const payload = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Cookie': `session_id=${sessionId}`
-    },
+    headers: { 'Content-Type': 'application/json', 'Cookie': `session_id=${getSessionId()}` },
     credentials: 'include',
     body: JSON.stringify({
-      id: 4,
-      jsonrpc: "2.0", 
-      method: "call",
-      params: {
-        model: props.model,
-        method: "read",
-        args: [[parseInt(props.id!)]],
-        kwargs: {}
-      }
+      id: 4, jsonrpc: '2.0', method: 'call',
+      params: { model: props.model, method: 'read', args: [[parseInt(props.id!)]], kwargs: {} }
     })
   })
   data.value = await payload.json()
 }
 
-watch(() => props.id, async () => {
-  if (props.id) {
-    // console.log('id changed', props.id)
-    await web_read()
-  }
-})
-
-onMounted(async () => {
-  await web_read()
-})
+watch(() => props.id, async () => { if (props.id) await web_read() })
+onMounted(async () => { await web_read() })
 </script>
 
 <style scoped>
-.table-responsive {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin-bottom: 1rem;
+.wk-table-wrap {
+  background: var(--wk-bg);
+  border-top: 1px solid var(--wk-border);
 }
 
-.search-container {
-  margin-bottom: 20px;
+/* ── Toolbar ── */
+.wk-table-toolbar {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--wk-border);
+  background: var(--wk-bg);
 }
 
-.search-input {
+.wk-search-wrap {
+  position: relative;
+  flex: 1;
+}
+
+.wk-search-icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--wk-text-muted);
+  pointer-events: none;
+}
+
+.wk-search-input {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 6px 10px 6px 28px;
+  border: 1px solid var(--wk-border);
+  border-radius: var(--wk-radius-sm);
+  font-size: 12.5px;
+  color: var(--wk-text-primary);
+  background: var(--wk-bg-surface);
+  transition: border-color var(--wk-transition), box-shadow var(--wk-transition);
 }
 
-.search-input:focus {
+.wk-search-input:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+  border-color: var(--wk-accent);
+  box-shadow: 0 0 0 3px var(--wk-accent-faint);
+  background: var(--wk-bg);
 }
 
-.copy-button {
-  padding: 8px 16px;
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  border-radius: 4px;
+.wk-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  background: var(--wk-bg-elevated);
+  color: var(--wk-text-secondary);
+  border: 1px solid var(--wk-border);
+  border-radius: var(--wk-radius-sm);
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 14px;
   white-space: nowrap;
+  transition: all var(--wk-transition);
 }
 
-.copy-button:hover {
-  background-color: #357abd;
+.wk-copy-btn:hover {
+  background: var(--wk-bg-surface);
+  border-color: var(--wk-text-muted);
+  color: var(--wk-text-primary);
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 20px 0;
-  background-color: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  min-width: 500px; /* Ensures table doesn't get too squeezed */
+.wk-copy-btn--copied {
+  background: var(--wk-success-bg) !important;
+  border-color: var(--wk-success-border) !important;
+  color: var(--wk-success) !important;
 }
 
-th, td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 300px; /* Prevents cells from getting too wide */
+/* ── Field list (stacked layout) ── */
+.wk-field-list {
+  display: flex;
+  flex-direction: column;
 }
 
-th {
-  background-color: #f5f5f5;
-  font-weight: bold;
-  color: #333;
-  position: sticky;
-  top: 0;
-  z-index: 1;
+.wk-field-row {
+  border-bottom: 1px solid var(--wk-border);
 }
 
-tr:hover {
-  background-color: #f8f8f8;
+/* ── Key area ── */
+.wk-field-row__key-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px 3px;
+  cursor: pointer;
+  transition: background var(--wk-transition);
 }
 
-.wk-title {
-  color: #2c3e50;
-  font-size: 1.2rem;
+.wk-field-row__key-area:hover {
+  background: var(--wk-accent-faint);
+}
+
+.wk-copied--key {
+  background: var(--wk-success-bg) !important;
+}
+
+.wk-field-row__key {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
   font-weight: 600;
-  margin: 1rem 0 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #4a90e2;
+  color: var(--wk-accent);
 }
 
-@media screen and (max-width: 600px) {
-  table {
-    min-width: 100%;
-  }
-  
-  th, td {
-    padding: 8px 10px;
-  }
+.wk-copied--key .wk-field-row__key {
+  color: var(--wk-success);
+}
 
-  .wk-title {
-    font-size: 1.5rem;
-    margin: 0.8rem 0 1.2rem;
-  }
+.wk-field-row__badge {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--wk-text-muted);
+  opacity: 0;
+  transition: opacity var(--wk-transition);
+}
+
+.wk-field-row__key-area:hover .wk-field-row__badge {
+  opacity: 1;
+}
+
+.wk-copied--key .wk-field-row__badge {
+  opacity: 1;
+  color: var(--wk-success);
+}
+
+/* ── Value area ── */
+.wk-field-row__val {
+  position: relative;
+  margin: 0;
+  padding: 3px 16px 8px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--wk-text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  width: 100%;
+  cursor: pointer;
+  transition: background var(--wk-transition);
+}
+
+.wk-field-row__val:hover {
+  background: var(--wk-bg-elevated);
+}
+
+.wk-copied--val {
+  background: var(--wk-success-bg) !important;
+  color: var(--wk-success) !important;
+}
+
+.wk-val-badge {
+  display: block;
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--wk-text-muted);
+  opacity: 0;
+  transition: opacity var(--wk-transition);
+  margin-top: 2px;
+}
+
+.wk-field-row__val:hover .wk-val-badge {
+  opacity: 1;
+}
+
+.wk-copied--val .wk-val-badge {
+  opacity: 1;
+  color: var(--wk-success);
+}
+
+.wk-table-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--wk-text-muted);
+  font-size: 13px;
 }
 </style>
